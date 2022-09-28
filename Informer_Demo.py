@@ -1,14 +1,17 @@
 from utils.tools import dotdict
 from exp.exp_informer import Exp_Informer
+import os
+import matplotlib.pyplot as plt
 import torch
+import numpy as np
 args = dotdict()
 
 args.model = 'informer' # model of experiment, options: [informer, informerstack, informerlight(TBD)]
 
-args.data = 'ETTh1' # data
-args.root_path = './data/' # root path of data file
-args.data_path = 'ETTh1.csv' # data file
-args.features = 'M' # forecasting task, options:[M, S, MS]; M:multivariate predict multivariate, S:univariate predict univariate, MS:multivariate predict univariate
+args.data = 'A1' # data
+args.root_path = './data/ETT/' # root path of data file
+args.data_path = 'A1.csv' # data file
+args.features = 'S' # forecasting task, options:[M, S, MS]; M:multivariate predict multivariate, S:univariate predict univariate, MS:multivariate predict univariate
 args.target = 'OT' # target feature in S or MS task
 args.freq = 'h' # freq for time features encoding, options:[s:secondly, t:minutely, h:hourly, d:daily, b:business days, w:weekly, m:monthly], you can also use more detailed freq like 15min or 3h
 args.checkpoints = './informer_checkpoints' # location of model checkpoints
@@ -18,9 +21,9 @@ args.label_len = 48 # start token length of Informer decoder
 args.pred_len = 24 # prediction sequence length
 # Informer decoder input: concat[start token series(label_len), zero padding series(pred_len)]
 
-args.enc_in = 7 # encoder input size
-args.dec_in = 7 # decoder input size
-args.c_out = 7 # output size
+args.enc_in = 1 # encoder input size
+args.dec_in = 1 # decoder input size
+args.c_out = 1 # output size
 args.factor = 5 # probsparse attn factor
 args.d_model = 512 # dimension of model
 args.n_heads = 8 # num of heads
@@ -69,6 +72,7 @@ data_parser = {
     'ETTh2': {'data': 'ETTh2.csv', 'T': 'OT', 'M': [7, 7, 7], 'S': [1, 1, 1], 'MS': [7, 7, 1]},
     'ETTm1': {'data': 'ETTm1.csv', 'T': 'OT', 'M': [7, 7, 7], 'S': [1, 1, 1], 'MS': [7, 7, 1]},
     'ETTm2': {'data': 'ETTm2.csv', 'T': 'OT', 'M': [7, 7, 7], 'S': [1, 1, 1], 'MS': [7, 7, 1]},
+    'A1': {'data': 'A1.csv', 'T': 'OT', 'M': [1, 1, 1], 'S': [1, 1, 1], 'MS': [1, 1, 1]}
 }
 if args.data in data_parser.keys():
     data_info = data_parser[args.data]
@@ -117,4 +121,89 @@ for ii in range(args.itr):
 
     torch.cuda.empty_cache()
 
+exp.predict(setting, True)
 
+prediction = np.load('./results/'+setting+'/real_prediction.npy')
+
+print(prediction.shape)
+
+
+# here is the detailed code of function predict
+
+def predict(exp, setting, load=False):
+    pred_data, pred_loader = exp._get_data(flag='pred')
+
+    if load:
+        path = os.path.join(exp.args.checkpoints, setting)
+        best_model_path = path + '/' + 'checkpoint.pth'
+        exp.model.load_state_dict(torch.load(best_model_path))
+
+    exp.model.eval()
+
+    preds = []
+
+    for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pred_loader):
+        batch_x = batch_x.float().to(exp.device)
+        batch_y = batch_y.float()
+        batch_x_mark = batch_x_mark.float().to(exp.device)
+        batch_y_mark = batch_y_mark.float().to(exp.device)
+
+        # decoder input
+        if exp.args.padding == 0:
+            dec_inp = torch.zeros([batch_y.shape[0], exp.args.pred_len, batch_y.shape[-1]]).float()
+        elif exp.args.padding == 1:
+            dec_inp = torch.ones([batch_y.shape[0], exp.args.pred_len, batch_y.shape[-1]]).float()
+        else:
+            dec_inp = torch.zeros([batch_y.shape[0], exp.args.pred_len, batch_y.shape[-1]]).float()
+        dec_inp = torch.cat([batch_y[:, :exp.args.label_len, :], dec_inp], dim=1).float().to(exp.device)
+        # encoder - decoder
+        if exp.args.use_amp:
+            with torch.cuda.amp.autocast():
+                if exp.args.output_attention:
+                    outputs = exp.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                else:
+                    outputs = exp.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+        else:
+            if exp.args.output_attention:
+                outputs = exp.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+            else:
+                outputs = exp.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+        f_dim = -1 if exp.args.features == 'MS' else 0
+        batch_y = batch_y[:, -exp.args.pred_len:, f_dim:].to(exp.device)
+
+        pred = outputs.detach().cpu().numpy()  # .squeeze()
+
+        preds.append(pred)
+
+    preds = np.array(preds)
+    preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
+
+    # result save
+    folder_path = './results/' + setting + '/'
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+    np.save(folder_path + 'real_prediction.npy', preds)
+
+    return preds
+
+# you can also use this prediction function to get result
+prediction = predict(exp, setting, True)
+
+
+
+# plt.figure()
+# plt.plot(prediction[0,:,-1])
+# plt.show()
+
+preds = np.load('./results/'+setting+'/pred.npy')
+trues = np.load('./results/'+setting+'/true.npy')
+
+# [samples, pred_len, dimensions]
+preds.shape, trues.shape
+# draw OT prediction
+plt.figure()
+plt.plot(trues[0,:,-1], label='GroundTruth')
+plt.plot(preds[0,:,-1], label='Prediction')
+plt.legend()
+plt.show()
