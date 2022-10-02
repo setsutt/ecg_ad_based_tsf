@@ -74,6 +74,7 @@ class Exp_Informer(Exp_Basic):
             'Solar':Dataset_Custom,
             'Twitter_volume_AMZN':Dataset_Custom,
             'custom':Dataset_Custom,
+            'mitd4':Dataset_ETT_hour,
 
         }
         Data = data_dict[self.args.data]
