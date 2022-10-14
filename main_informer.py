@@ -71,6 +71,7 @@ if args.use_gpu and args.use_multi_gpu:
 data_parser = {
      'ETTh1':{'data':'ETTh1.csv','T':'OT','M':[7,7,7],'S':[1,1,1],'MS':[7,7,1]},
      'A1':{'data':'A1.csv','T':'OT','M':[1,1,1],'S':[1,1,1],'MS':[64,64,1]},
+     'max100a':{'data':'max100a.csv','T':'OT','M':[1,1,1],'S':[1,1,1],'MS':[64,64,1]},
     # 'ETTh2':{'data':'ETTh2.csv','T':'OT','M':[7,7,7],'S':[1,1,1],'MS':[7,7,1]},
     # 'ETTm1':{'data':'ETTm1.csv','T':'OT','M':[7,7,7],'S':[1,1,1],'MS':[7,7,1]},
     # 'ETTm2':{'data':'ETTm2.csv','T':'OT','M':[7,7,7],'S':[1,1,1],'MS':[7,7,1]},
