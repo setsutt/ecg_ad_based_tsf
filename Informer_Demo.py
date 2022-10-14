@@ -72,7 +72,8 @@ data_parser = {
     'ETTh2': {'data': 'ETTh2.csv', 'T': 'OT', 'M': [7, 7, 7], 'S': [1, 1, 1], 'MS': [7, 7, 1]},
     'ETTm1': {'data': 'ETTm1.csv', 'T': 'OT', 'M': [7, 7, 7], 'S': [1, 1, 1], 'MS': [7, 7, 1]},
     'ETTm2': {'data': 'ETTm2.csv', 'T': 'OT', 'M': [7, 7, 7], 'S': [1, 1, 1], 'MS': [7, 7, 1]},
-    'A1': {'data': 'A1.csv', 'T': 'OT', 'M': [1, 1, 1], 'S': [1, 1, 1], 'MS': [1, 1, 1]}
+    'A1': {'data': 'A1.csv', 'T': 'OT', 'M': [1, 1, 1], 'S': [1, 1, 1], 'MS': [1, 1, 1]},
+    'max100a': {'data': 'max100a.csv', 'T': 'OT', 'M': [1, 1, 1], 'S': [1, 1, 1], 'MS': [1, 1, 1]},
 }
 if args.data in data_parser.keys():
     data_info = data_parser[args.data]
