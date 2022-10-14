@@ -75,6 +75,7 @@ class Exp_Informer(Exp_Basic):
             'Twitter_volume_AMZN':Dataset_Custom,
             'custom':Dataset_Custom,
             'mitd4':Dataset_ETT_hour,
+            'max100a':Dataset_ETT_hour,
         }
         Data = data_dict[self.args.data]
         timeenc = 0 if args.embed!='timeF' else 1
