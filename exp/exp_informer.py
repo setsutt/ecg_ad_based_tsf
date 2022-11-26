@@ -65,7 +65,7 @@ class Exp_Informer(Exp_Basic):
 
         data_dict = {
             'ETTh1':Dataset_ETT_hour,
-            'A1':Dataset_ETT_hour,
+            'max427cut2000':Dataset_ETT_hour,
             'ETTh2':Dataset_ETT_hour,
             'ETTm1':Dataset_ETT_minute,
             'ETTm2':Dataset_ETT_minute,
@@ -76,6 +76,7 @@ class Exp_Informer(Exp_Basic):
             'custom':Dataset_Custom,
             'mitd4':Dataset_ETT_hour,
             'max100a':Dataset_ETT_hour,
+            'max100a2':Dataset_ETT_hour,
         }
         Data = data_dict[self.args.data]
         timeenc = 0 if args.embed!='timeF' else 1
