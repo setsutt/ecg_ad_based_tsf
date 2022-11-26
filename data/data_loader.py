@@ -48,7 +48,7 @@ class Dataset_ETT_hour(Dataset):
                                           self.data_path))
 
         border1s = [0, 9000 - self.seq_len, 11000 - self.seq_len]
-        border2s = [9000, 11000, 11500]
+        border2s = [9000, 11000, 12000]
         border1 = border1s[self.set_type]
         border2 = border2s[self.set_type]
         
